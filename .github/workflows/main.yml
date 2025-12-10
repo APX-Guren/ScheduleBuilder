@@ -29,32 +29,15 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # 1. Add Android Platform (Creates all the files)
-      - name: Add Android Platform
-        run: cordova platform add android
-
-      # --- FINAL GRADLE FIX: TARGETING THE PRIMARY BUILD FILE ---
-      # This step is the LAST attempt to manually override the version 
-      # before the build command crashes. We target the file that specifies the required Gradle version.
-      - name: Fix Gradle Version in Project Build File
+      # --- FINAL FIX: OVERRIDE CORDOVA PLATFORM WITH PATCHED VERSION ---
+      # This version is a copy of Cordova 12 that has the XmlParser crash code removed.
+      - name: Add Patched Android Platform
         run: |
-          BUILD_GRADLE_PATH="platforms/android/build.gradle"
-          
-          # Check if the file exists after platform add (it should always exist)
-          if [ -f "$BUILD_GRADLE_PATH" ]; then
-            echo "--- Forcing Gradle Version to 8.7 ---"
-            
-            # This sed command inserts the version property needed to override the default.
-            # We are modifying the main build.gradle file to declare a custom wrapper.
-            sed -i '/apply from: "cordova-common.gradle"/a \ 
-            ext.cli.gradle = "8.7"' $BUILD_GRADLE_PATH
-            
-            echo "--- Gradle Version Override Applied ---"
-          else
-            echo "ERROR: Could not find $BUILD_GRADLE_PATH. Manual intervention may be required."
-            exit 1 
-          fi
-      # -------------------------------------------------------------
+          # 1. Remove the standard platform that crashes with Gradle 9
+          cordova platform remove android --no-save
+          # 2. Add the patched platform from GitHub that fixes the XmlParser crash
+          cordova platform add https://github.com/dpa99c/cordova-android#master --save
+      # -----------------------------------------------------------------
 
       - name: Build APK
         run: cordova build android --debug
