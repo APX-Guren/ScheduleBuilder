@@ -26,19 +26,15 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
+      # 1. This step now installs the new, reliable Gradle fix plugin
       - name: Install Dependencies
         run: npm install
 
-      # --- FINAL FIX: OVERRIDE CORDOVA PLATFORM WITH PATCHED VERSION ---
-      # This version is a copy of Cordova 12 that has the XmlParser crash code removed.
-      - name: Add Patched Android Platform
-        run: |
-          # 1. Remove the standard platform that crashes with Gradle 9
-          cordova platform remove android --no-save
-          # 2. Add the patched platform from GitHub that fixes the XmlParser crash
-          cordova platform add https://github.com/dpa99c/cordova-android#master --save
-      # -----------------------------------------------------------------
+      # 2. Add Android Platform (This uses the preferences from config.xml)
+      - name: Add Android Platform
+        run: cordova platform add android
 
+      # 3. Final Build (This will now use Gradle 8.7, set by the new plugin)
       - name: Build APK
         run: cordova build android --debug
 
