@@ -9,6 +9,6 @@
     <allow-intent href="https://*/*" />
     <preference name="AndroidXEnabled" value="true" />
     
-    <preference name="GradleDistributionUrl" value="https://services.gradle.org/distributions/gradle-8.7-all.zip" />
+    <preference name="GradleDistributionUrl" value="https://services.gradle.org/distributions/gradle-8.7-all.zip" /> 
     <preference name="GradleVersion" value="8.7" /> 
 </widget>
