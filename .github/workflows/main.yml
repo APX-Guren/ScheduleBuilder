@@ -26,15 +26,14 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      # 1. This step now installs the new, reliable Gradle fix plugin
       - name: Install Dependencies
         run: npm install
 
-      # 2. Add Android Platform (This uses the preferences from config.xml)
+      # 1. Add Android Platform (This uses the preferences from config.xml set below)
       - name: Add Android Platform
         run: cordova platform add android
 
-      # 3. Final Build (This will now use Gradle 8.7, set by the new plugin)
+      # 2. Final Build
       - name: Build APK
         run: cordova build android --debug
 
