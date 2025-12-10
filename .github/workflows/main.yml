@@ -29,18 +29,14 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # --- FIX: COMBINE PLATFORM ADD & GRADLE FIX ---
-      # This runs both commands in the same shell session, guaranteeing the files exist.
-      - name: Add Platform and Fix Gradle Version
-        run: |
-          cordova platform add android
-          # Now that the folders exist, run the fix:
-          cd platforms/android/gradle/wrapper
-          # This forces Gradle 8.7 (Fixes XmlParser/Gradle 9 crash)
-          sed -i 's/distributionUrl=.*$/distributionUrl=https\:\/\/services.gradle.org\/distributions\/gradle-8.7-all.zip/' gradle-wrapper.properties
-      # ---------------------------------------------
+      # 1. Add Android Platform (This creates the file path)
+      - name: Add Android Platform
+        run: cordova platform add android
 
-      # 4. The final build
+      # 2. RUN HOOK: The external JS file we created will now run automatically
+      # and fix the Gradle version at the correct moment.
+
+      # 3. Final Build (Should now use Gradle 8.7)
       - name: Build APK
         run: cordova build android --debug
 
