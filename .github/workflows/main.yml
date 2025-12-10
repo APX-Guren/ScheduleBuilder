@@ -29,16 +29,24 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # 1. Add Android Platform (This creates the file path)
-      - name: Add Android Platform
-        run: cordova platform add android
+      # We SKIP the separate platform add step here to make the build script more reliable.
 
-      # 2. RUN HOOK: The external JS file we created will now run automatically
-      # and fix the Gradle version at the correct moment.
+      # --- FINAL FIX: ADD PLATFORM, FIX GRADLE, THEN BUILD ALL IN ONE SCRIPT ---
+      # This guarantees the file exists before attempting to edit it.
+      - name: Build APK (Self-Contained Fix)
+        run: |
+          # 1. Add Platform (This creates the platforms folder structure)
+          cordova platform add android
 
-      # 3. Final Build (Should now use Gradle 8.7)
-      - name: Build APK
-        run: cordova build android --debug
+          # 2. Fix Gradle Version (This fixes the XmlParser/Gradle 9 crash)
+          echo "--- Starting Inline Gradle Fix ---"
+          cd platforms/android/gradle/wrapper
+          sed -i 's/distributionUrl=.*$/distributionUrl=https\:\/\/services.gradle.org\/distributions\/gradle-8.7-all.zip/' gradle-wrapper.properties
+          echo "--- Gradle Fix Applied ---"
+          
+          # 3. Final Build Command
+          cordova build android --debug
+      # --------------------------------------------------------------------------
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
