@@ -14,7 +14,7 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "cordova-android": "^12.0.0",
-        "cordova-plugin-local-notification": "https://github.com/katzer/cordova-plugin-local-notification/tarball/master"
+        "cordova-plugin-local-notification": "https://github.com/katzer/cordova-plugin-local-notification/archive/master.tar.gz"
     },
     "cordova": {
         "plugins": {
@@ -24,6 +24,4 @@
             "android"
         ]
     }
-
 }
-
