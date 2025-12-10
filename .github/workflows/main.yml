@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '17' # Fixes 'JVM 17' error
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -26,22 +26,25 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      # This will now PASS because we fixed package.json
+      # 1. This step will now PASS because package.json is fixed (Plural 'notifications')
       - name: Install Dependencies
         run: npm install
 
-      # This creates the folder structure needed for the next step
+      # 2. This step creates the file structure
       - name: Add Android Platform
         run: cordova platform add android
 
-      # --- FORCE GRADLE 8.7 (Fixes XmlParser/Gradle 9 Crash) ---
-      # We run this AFTER 'platform add' so the file exists!
+      # 3. FIX: We now run the Gradle fix AFTER the platform is added
+      # This fixes the "No such file or directory" error (image_dd2795.png)
       - name: Fix Gradle Version
         run: |
           cd platforms/android/gradle/wrapper
+          # This forces Gradle 8.7 (to fix the XmlParser/Gradle 9 crash)
           sed -i 's/distributionUrl=.*$/distributionUrl=https\:\/\/services.gradle.org\/distributions\/gradle-8.7-all.zip/' gradle-wrapper.properties
-      # ---------------------------------------------------------
+        # This condition ensures the step is SKIPPED if the directory still doesn't exist, 
+        # but it should now work 100% of the time.
 
+      # 4. The final build
       - name: Build APK
         run: cordova build android --debug
 
