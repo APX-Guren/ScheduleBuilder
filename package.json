@@ -15,12 +15,12 @@
     "devDependencies": {
         "cordova-android": "^12.0.0",
         "cordova-plugin-local-notification": "https://github.com/katzer/cordova-plugin-local-notifications/archive/master.tar.gz",
-        "cordova-gradle-settings-plugin": "1.0.0"  <-- NEW PLUGIN ADDED HERE
+        "cordova-gradle-settings-plugin": "1.0.0"
     },
     "cordova": {
         "plugins": {
             "cordova-plugin-local-notification": {},
-            "cordova-gradle-settings-plugin": {}  <-- NEW PLUGIN ADDED HERE
+            "cordova-gradle-settings-plugin": {}
         },
         "platforms": [
             "android"
