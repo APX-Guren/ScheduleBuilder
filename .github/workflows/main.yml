@@ -7,9 +7,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04   # <--- FIX: Uses an older, stable Linux version
+
     steps:
       - uses: actions/checkout@v3
+
+      - name: Setup Java      # <--- FIX: Forces Java 11 (Required for Cordova)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
