@@ -26,20 +26,19 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      # 1. Install Plugin Dependencies (Should now pass)
       - name: Install Dependencies
         run: npm install
 
-      # 2. Add Android Platform (THIS CREATES THE DIRECTORY)
-      - name: Add Android Platform
-        run: cordova platform add android
-
-      # 3. FIX GRADLE (We run this NOW, since the directory exists)
-      - name: Fix Gradle Version
+      # --- FIX: COMBINE PLATFORM ADD & GRADLE FIX ---
+      # This runs both commands in the same shell session, guaranteeing the files exist.
+      - name: Add Platform and Fix Gradle Version
         run: |
+          cordova platform add android
+          # Now that the folders exist, run the fix:
           cd platforms/android/gradle/wrapper
           # This forces Gradle 8.7 (Fixes XmlParser/Gradle 9 crash)
           sed -i 's/distributionUrl=.*$/distributionUrl=https\:\/\/services.gradle.org\/distributions\/gradle-8.7-all.zip/' gradle-wrapper.properties
+      # ---------------------------------------------
 
       # 4. The final build
       - name: Build APK
