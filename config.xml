@@ -9,5 +9,5 @@
     <allow-intent href="https://*/*" />
     <preference name="AndroidXEnabled" value="true" />
     
-    <hook type="before_build" src="hooks/before_build/01_fix_gradle.js" />
+    <hook type="after_prepare" src="hooks/after_prepare/01_fix_gradle.js" />
 </widget>
