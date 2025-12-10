@@ -9,5 +9,6 @@
     <allow-intent href="https://*/*" />
     <preference name="AndroidXEnabled" value="true" />
     
-    <hook type="after_prepare" src="hooks/after_prepare/01_fix_gradle.js" />
+    <preference name="GradleDistributionUrl" value="https://services.gradle.org/distributions/gradle-8.7-all.zip" />
+
 </widget>
