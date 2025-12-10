@@ -5,6 +5,11 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  # FINAL FIX: This environment variable forces Cordova to download and use 
+  # the stable Gradle 8.7 distribution, bypassing the crashing Gradle 9.2.1 system default.
+  CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: "https://services.gradle.org/distributions/gradle-8.7-all.zip"
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -16,7 +21,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '17' # Required by Android SDK tools
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -32,20 +37,7 @@ jobs:
       - name: Add Android Platform
         run: cordova platform add android
 
-      # --- FINAL FIX: Overwrite crashing CordovaLib with a WORKING patch file ---
-      - name: Overwrite CordovaLib
-        run: |
-          # The file to be replaced
-          CORDOVA_GRADLE_PATH="platforms/android/CordovaLib/cordova.gradle"
-
-          echo "--- Overwriting $CORDOVA_GRADLE_PATH with stable patch ---"
-          
-          # We use a reliable link that points to a known working fix for the XmlParser issue.
-          curl -s https://raw.githubusercontent.com/apache/cordova-android/rel/10.1.2/CordovaLib/cordova.gradle -o $CORDOVA_GRADLE_PATH
-          
-          echo "--- CordovaLib Overwrite Complete. Build will proceed. ---"
-      # ------------------------------------------------------------------------
-
+      # The build will now use the Gradle distribution set in the 'env' section above.
       - name: Build APK
         run: cordova build android --debug
 
