@@ -29,24 +29,35 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # We SKIP the separate platform add step here to make the build script more reliable.
+      # 1. This step creates the folders AND installs plugins
+      - name: Add Android Platform
+        run: cordova platform add android
 
-      # --- FINAL FIX: ADD PLATFORM, FIX GRADLE, THEN BUILD ALL IN ONE SCRIPT ---
-      # This guarantees the file exists before attempting to edit it.
-      - name: Build APK (Self-Contained Fix)
+      # --- FINAL, ROBUST GRADLE FIX ---
+      # This fix runs as its own step, using a short wait period 
+      # and a simple existence check to ensure the directory is settled.
+      - name: Fix Gradle Version
         run: |
-          # 1. Add Platform (This creates the platforms folder structure)
-          cordova platform add android
-
-          # 2. Fix Gradle Version (This fixes the XmlParser/Gradle 9 crash)
-          echo "--- Starting Inline Gradle Fix ---"
-          cd platforms/android/gradle/wrapper
-          sed -i 's/distributionUrl=.*$/distributionUrl=https\:\/\/services.gradle.org\/distributions\/gradle-8.7-all.zip/' gradle-wrapper.properties
-          echo "--- Gradle Fix Applied ---"
+          echo "--- Starting Robust Gradle Fix ---"
+          # Wait 5 seconds to ensure the file system settles after plugin installation
+          sleep 5
           
-          # 3. Final Build Command
-          cordova build android --debug
-      # --------------------------------------------------------------------------
+          # Use a simple existence check before CD to prevent the script from failing.
+          GRADLE_PATH="platforms/android/gradle/wrapper"
+          
+          if [ -d "$GRADLE_PATH" ]; then
+            cd "$GRADLE_PATH"
+            # This forces Gradle 8.7 (Fixes XmlParser/Gradle 9 crash)
+            sed -i 's/distributionUrl=.*$/distributionUrl=https\:\/\/services.gradle.org\/distributions\/gradle-8.7-all.zip/' gradle-wrapper.properties
+            echo "--- Gradle Fix Applied Successfully ---"
+          else
+            echo "Error: Directory $GRADLE_PATH not found after 5s wait. Build will likely fail."
+            exit 1 
+          fi
+      # ---------------------------------------------
+
+      - name: Build APK
+        run: cordova build android --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
