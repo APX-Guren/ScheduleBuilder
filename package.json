@@ -14,13 +14,13 @@
     "license": "Apache-2.0",
     "devDependencies": {
         "cordova-android": "^12.0.0",
-        "cordova-plugin-local-notification": "https://github.com/katzer/cordova-plugin-local-notifications/archive/master.tar.gz",
-        "cordova-custom-config": "5.1.0"  <-- CORRECT PLUGIN NAME
+        "cordova-plugin-local-notifications": "0.9.0",  <-- OFFICIAL, MODERN PLUGIN (Note the 's')
+        "cordova-custom-config": "5.1.0"
     },
     "cordova": {
         "plugins": {
-            "cordova-plugin-local-notification": {},
-            "cordova-custom-config": {}  <-- CORRECT PLUGIN NAME
+            "cordova-plugin-local-notifications": {},
+            "cordova-custom-config": {}
         },
         "platforms": [
             "android"
