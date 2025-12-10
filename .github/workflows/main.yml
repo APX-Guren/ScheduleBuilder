@@ -5,18 +5,22 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  # FIX: Force Gradle 8.7 (Stable) to prevent "XmlParser" and "JVM" errors
+  CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: "https://services.gradle.org/distributions/gradle-8.7-all.zip"
+
 jobs:
   build:
-    runs-on: ubuntu-22.04   # <--- FIX: Uses an older, stable Linux version
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Java      # <--- FIX: Forces Java 11 (Required for Cordova)
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'  # <--- FIX: Updated to 17 to match modern Android tools
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
