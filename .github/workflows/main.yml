@@ -26,13 +26,16 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
+      # This will now PASS because we fixed package.json
       - name: Install Dependencies
         run: npm install
 
+      # This creates the folder structure needed for the next step
       - name: Add Android Platform
         run: cordova platform add android
 
-      # --- FORCE GRADLE 8.7 (This fixes the XmlParser crash) ---
+      # --- FORCE GRADLE 8.7 (Fixes XmlParser/Gradle 9 Crash) ---
+      # We run this AFTER 'platform add' so the file exists!
       - name: Fix Gradle Version
         run: |
           cd platforms/android/gradle/wrapper
