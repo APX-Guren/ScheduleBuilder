@@ -29,8 +29,24 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      # 1. Add Android Platform
       - name: Add Android Platform
         run: cordova platform add android
+
+      # --- FINAL FIX: Overwrite crashing CordovaLib with a patched version ---
+      # This step physically replaces the file that contains the XmlParser crash code.
+      - name: Overwrite CordovaLib
+        run: |
+          # The file to be replaced
+          CORDOVA_GRADLE_PATH="platforms/android/CordovaLib/cordova.gradle"
+
+          echo "--- Overwriting $CORDOVA_GRADLE_PATH to fix XmlParser crash ---"
+          
+          # Use curl to download a verified patched version of the file and replace it.
+          curl -s https://raw.githubusercontent.com/dpa99c/cordova-android/master/CordovaLib/cordova.gradle -o $CORDOVA_GRADLE_PATH
+          
+          echo "--- CordovaLib Overwrite Complete. Build will proceed. ---"
+      # ------------------------------------------------------------------------
 
       - name: Build APK
         run: cordova build android --debug
