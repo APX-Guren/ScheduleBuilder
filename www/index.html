@@ -1,0 +1,702 @@
+!DOCTYPE html
+html
+head
+meta charset=UTF-8
+meta name=viewport content=width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no
+titleScheduletitle
+script src=cordova.jsscript
+
+style
+     RESET 
+    body { margin 0; padding 0; font-family sans-serif; background-color #f8fafc; color #1e293b; height 100vh; display flex; flex-direction column; overflow hidden; }
+     { box-sizing border-box; -webkit-tap-highlight-color transparent; }
+    
+     UTILS 
+    .hidden { display none !important; }
+    
+     ANIMATIONS 
+    @keyframes slideUp { 0% { transform translateY(20px); opacity 0; } 100% { transform translateY(0); opacity 1; } }
+    @keyframes fadeIn { 0% { opacity 0; } 100% { opacity 1; } }
+    @keyframes popUp { 0% { transform translateY(100%); } 100% { transform translateY(0); } }
+
+     HEADER 
+    .header { padding 15px 20px; background #ffffff; border-bottom 1px solid #e2e8f0; display flex; justify-content space-between; align-items center; z-index 30; flex-shrink 0; box-shadow 0 1px 3px rgba(0,0,0,0.05); }
+    .title { font-size 20px; font-weight 800; margin 0; color #1e293b; }
+    .subtitle { font-size 10px; font-weight 700; text-transform uppercase; color #94a3b8; margin-top 2px; }
+    
+    .toggle-box { background #f1f5f9; padding 4px; border-radius 8px; display flex; }
+    .toggle-btn { border none; background transparent; padding 8px 14px; border-radius 6px; font-size 12px; font-weight 700; color #94a3b8; transition all 0.2s; }
+    .toggle-btn.active { background #ffffff; color #4f46e5; box-shadow 0 1px 3px rgba(0,0,0,0.1); }
+
+     LAYOUT 
+    .view-container { position relative; flex 1; overflow hidden; }
+    .view { position absolute; top 0; left 0; right 0; bottom 0; background #f8fafc; display flex; flex-direction column; opacity 0; pointer-events none; transition opacity 0.3s; }
+    .view.active { opacity 1; pointer-events auto; z-index 10; }
+
+     DAY VIEW - FIXED SQUEEZING 
+    .date-nav { 
+        padding 15px 0 15px 15px; background #ffffff; 
+        overflow-x auto;  ALLOW SCROLLING 
+        white-space nowrap; flex-shrink 0; 
+        scroll-behavior smooth;
+    }
+    .date-nav-webkit-scrollbar { display none; }
+    
+    .date-btn { 
+        display inline-block; width 60px;  FIXED WIDTH 
+        height 65px; margin-right 12px; 
+        border-radius 12px; background #f1f5f9; 
+        color #94a3b8; text-align center; 
+        padding-top 12px; transition transform 0.2s; 
+    }
+    .date-btn.sel { background #4f46e5; color #ffffff; transform scale(1.05); box-shadow 0 4px 8px rgba(79,70,229,0.3); }
+    .d-day { font-size 10px; font-weight 800; text-transform uppercase; display block; margin-bottom 4px; }
+    .d-num { font-size 18px; font-weight 800; display block; }
+
+    .list { padding 20px; overflow-y auto; flex 1; -webkit-overflow-scrolling touch; transition opacity 0.2s ease, transform 0.2s ease; opacity 1; transform translateY(0); }
+    .list.fade-out { opacity 0; transform translateY(10px); }
+    
+    .card { background #ffffff; border-radius 16px; padding 16px; margin-bottom 12px; position relative; overflow hidden; box-shadow 0 2px 5px rgba(0,0,0,0.03); border-left-width 6px; border-left-style solid; animation slideUp 0.4s ease-out backwards; }
+    .cardactive { transform scale(0.98); background #f8fafc; }
+    .c-code { font-size 18px; font-weight 800; color #1e293b; margin-bottom 4px; display flex; justify-content space-between; }
+    .c-title { font-size 13px; color #64748b; font-weight 500; margin-bottom 12px; white-space nowrap; overflow hidden; text-overflow ellipsis; }
+    .c-meta { display flex; align-items center; flex-wrap wrap; }
+    .tag { background #f1f5f9; padding 5px 10px; border-radius 6px; font-size 11px; font-weight 700; color #475569; margin-right 8px; display flex; align-items center; }
+    .tag span { margin-right 4px; }
+
+     WEEK GRID 
+    .week-scroll { overflow auto; background #ffffff; height 100%; -webkit-overflow-scrolling touch; }
+    .week-table { display block; width max-content; min-width 820px; } 
+    .w-row { display flex; }
+    .w-head { width 125px; flex-shrink 0; padding 12px; text-align center; border-bottom 1px solid #f1f5f9; border-right 1px solid #f1f5f9; font-size 11px; font-weight 800; color #94a3b8; background #fff; position sticky; top 0; z-index 60; }
+    .w-time { width 65px; flex-shrink 0; border-right 1px solid #f1f5f9; border-bottom 1px solid #f1f5f9; font-size 10px; color #94a3b8; font-weight 700; text-align right; padding 5px; padding-top 8px; background #f8fafc; position sticky; left 0; z-index 50; }
+    .w-corner { width 65px; flex-shrink 0; background #fff; border-right 1px solid #f1f5f9; border-bottom 1px solid #f1f5f9; position sticky; left 0; top 0; z-index 70; }
+    .w-cell { width 125px; flex-shrink 0; border-right 1px solid #f1f5f9; border-bottom 1px solid #f1f5f9; height 54px; position relative; }
+    
+    .evt { 
+        position absolute; left 3px; right 3px; 
+        font-size 10px; padding 4px 6px; font-weight 700; 
+        border-radius 6px; overflow hidden; 
+        border-left-width 4px; border-left-style solid; 
+        color #1e293b; background #fff; 
+        box-shadow 0 2px 4px rgba(0,0,0,0.05);
+        z-index 40; cursor pointer; pointer-events auto;
+        display flex; flex-direction column; justify-content center; line-height 1.2;
+    }
+    .evtactive { transform scale(0.96); opacity 0.9; box-shadow 0 4px 10px rgba(0,0,0,0.15); }
+
+     MODAL 
+    #modal { display none; position fixed; top 0; left 0; right 0; bottom 0; background rgba(0,0,0,0.5); z-index 200; align-items flex-end; justify-content center; }
+    #modal.open { display flex; animation fadeIn 0.2s forwards; }
+    .m-box { background #fff; width 100%; max-width 400px; padding 25px; border-radius 20px 20px 0 0; box-shadow 0 -10px 25px rgba(0,0,0,0.1); transform translateY(100%); }
+    #modal.open .m-box { animation popUp 0.3s cubic-bezier(0.17, 0.67, 0.23, 1) forwards; }
+    .m-row { display flex; align-items center; margin-bottom 12px; padding 12px; background #f8fafc; border-radius 10px; }
+    .m-label { font-size 10px; font-weight 800; color #94a3b8; text-transform uppercase; margin-bottom 2px; }
+    .m-val { font-size 14px; font-weight 700; color #1e293b; }
+    .m-btn { width 100%; padding 15px; background #0f172a; color white; border none; border-radius 12px; font-weight 700; margin-top 10px; cursor pointer; }
+    .m-btn-del { background #fee2e2; color #ef4444; margin-top 10px; }
+
+     FAB 
+    .fab { position fixed; bottom 25px; right 25px; width 56px; height 56px; background #4f46e5; border-radius 50%; box-shadow 0 4px 10px rgba(79, 70, 229, 0.4); display flex; align-items center; justify-content center; color white; font-size 28px; font-weight 300; cursor pointer; z-index 50; transition transform 0.2s; }
+    .fabactive { transform scale(0.9); }
+
+     ADD FORM - Explicitly Hidden 
+    #add-modal { display none; position fixed; top 0; left 0; right 0; bottom 0; background rgba(0,0,0,0.5); z-index 210; align-items center; justify-content center; }
+    #add-modal.open { display flex; animation fadeIn 0.2s; }
+    .form-box { background #fff; width 90%; max-width 350px; padding 20px; border-radius 20px; }
+    .inp-group { margin-bottom 15px; }
+    .inp-label { display block; font-size 12px; font-weight 700; margin-bottom 5px; color #64748b; }
+    .inp { width 100%; padding 12px; border 1px solid #e2e8f0; border-radius 8px; font-size 14px; font-family sans-serif; }
+    
+     ALARM MODAL - Explicitly Hidden 
+    #alarm-modal { display none; position fixed; top 0; left 0; right 0; bottom 0; background rgba(0,0,0,0.5); z-index 300; align-items center; justify-content center; }
+    #alarm-modal.open { display flex; animation fadeIn 0.2s; }
+
+    .event-badge { font-size 9px; background #ef4444; color white; padding 2px 5px; border-radius 4px; vertical-align middle; margin-left 5px; }
+    .card.is-event { border-left-color #ef4444; background #fff1f2; }
+
+     COLORS 
+    .c-blue { border-left-color #3b82f6; } .bg-blue { background #dbeafe; border-left-color #3b82f6; }
+    .c-green { border-left-color #22c55e; } .bg-green { background #dcfce7; border-left-color #22c55e; }
+    .c-purple { border-left-color #a855f7; } .bg-purple { background #f3e8ff; border-left-color #a855f7; }
+    .c-orange { border-left-color #f97316; } .bg-orange { background #ffedd5; border-left-color #f97316; }
+    .c-red { border-left-color #ef4444; } .bg-red { background #fee2e2; border-left-color #ef4444; }
+    .c-teal { border-left-color #14b8a6; } .bg-teal { background #ccfbf1; border-left-color #14b8a6; }
+    .c-indigo { border-left-color #6366f1; } .bg-indigo { background #e0e7ff; border-left-color #6366f1; }
+    .c-yellow { border-left-color #eab308; } .bg-yellow { background #fef9c3; border-left-color #eab308; }
+    .c-pink { border-left-color #ec4899; } .bg-pink { background #fce7f3; border-left-color #ec4899; }
+    .c-gray { border-left-color #64748b; } .bg-gray { background #f1f5f9; border-left-color #64748b; }
+style
+head
+body
+
+div class=header
+    div
+        div class=titleSchedulediv
+        div class=subtitleMechanical Engdiv
+    div
+    div class=toggle-box
+        button class=toggle-btn active id=btn-day onclick=window.app.setTab('day')Daybutton
+        button class=toggle-btn id=btn-week onclick=window.app.setTab('week')Weekbutton
+    div
+div
+
+div class=view-container
+    div id=view-day class=view active
+        div id=date-nav class=date-navdiv
+        div id=day-list class=listdiv
+        div class=fab onclick=window.app.openAddForm()+div
+    div
+    div id=view-week class=view
+        div class=week-scroll
+            div id=week-targetdiv
+        div
+    div
+div
+
+div id=modal onclick=window.app.closeModal()
+    div class=m-box onclick=event.stopPropagation()
+        div style=displayflex; justify-contentspace-between; margin-bottom20px;
+            span id=m-code style=background#1e293b; colorwhite; padding6px 12px; border-radius8px; font-weight800; font-size12px; letter-spacing0.5px;CODEspan
+            span onclick=window.app.closeModal() style=font-size24px; color#cbd5e1; font-weightbold; padding5px;&times;span
+        div
+        div id=m-title style=font-size20px; font-weight800; margin-bottom24px; line-height1.3; color#1e293b;Titlediv
+        div class=m-row
+            div style=font-size20px; margin-right12px⏰div
+            divdiv class=m-labelTimedivdiv id=m-time class=m-valdivdiv
+        div
+        div class=m-row
+            div style=font-size20px; margin-right12px📍div
+            divdiv class=m-labelRoomdivdiv id=m-room class=m-valdivdiv
+        div
+        div class=m-row
+            div style=font-size20px; margin-right12px👥div
+            divdiv class=m-labelSectiondivdiv id=m-sec class=m-valdivdiv
+        div
+        
+        button id=btn-alarm class=m-btn style=background#4f46e5; margin-top20px; onclick=window.app.openAlarmForm()🔔 Set Alertbutton
+        button id=btn-delete class=m-btn style=background#fee2e2; color#ef4444; displaynone; margin-top10px; onclick=window.app.deleteEvent()Delete Eventbutton
+        button class=m-btn style=background#f1f5f9; color#64748b onclick=window.app.closeModal()Closebutton
+    div
+div
+
+div id=add-modal style=displaynone;
+    div class=form-box
+        h2 style=margin-top0;Add Task  Quizh2
+        div class=inp-group
+            label class=inp-labelTitlelabel
+            input type=text id=inp-title class=inp placeholder=e.g. Math Quiz
+        div
+        div class=inp-group
+            label class=inp-labelDatelabel
+            input type=date id=inp-date class=inp
+        div
+        div class=inp-group
+            label class=inp-labelTimelabel
+            input type=time id=inp-time class=inp
+        div
+        div style=displayflex; gap10px;
+            button class=m-btn style=margin-top0; background#f1f5f9; color#333; onclick=window.app.closeAdd()Cancelbutton
+            button class=m-btn style=margin-top0; onclick=window.app.saveEvent()Savebutton
+        div
+    div
+div
+
+div id=alarm-modal style=displaynone;
+    div class=form-box
+        h2 style=margin-top0;Set App Alarmh2
+        div class=inp-group
+            label class=inp-labelEvent Titlelabel
+            input type=text id=alarm-title class=inp
+        div
+        div class=inp-group
+            label class=inp-labelDate (YYYY-MM-DD)label
+            input type=text id=alarm-date class=inp inp-ro readonly
+        div
+        div class=inp-group
+            label class=inp-labelTime (HHMM)label
+            input type=time id=alarm-time class=inp
+        div
+        div style=displayflex; gap10px;
+            button class=m-btn style=margin-top0; background#f1f5f9; color#333; onclick=window.app.closeAlarmForm()Cancelbutton
+            button class=m-btn style=margin-top0; onclick=window.app.saveAlarm()Set Notificationbutton
+        div
+    div
+div
+
+script
+window.app = (function() {
+    
+     --- DATA ---
+    var coursesRaw = [
+        { code 'BOSH 101', section 'ME42S1', title 'Basic Occupational Safety and Health', c 'c-blue', bg 'bg-blue', schedule [{ day 1, start '1230', end '1330', room 'A-403' }, { day 3, start '1230', end '1330', room 'A-403' }, { day 5, start '1230', end '1330', room 'A-403' }] },
+        { code 'ME 422', section 'ME42S2', title 'ME Laws, Ethics, Codes and Standards', c 'c-green', bg 'bg-green', schedule [{ day 3, start '1630', end '1830', room 'A-401' }] },
+        { code 'ME 424', section 'ME42S4', title 'Mechanical Engineering Lab 3', c 'c-purple', bg 'bg-purple', schedule [{ day 2, start '0730', end '1030', room 'A-101' }, { day 4, start '0730', end '1030', room 'A-101' }] },
+        { code 'ME 425', section 'ME42S2', title 'Machine Design 2', c 'c-orange', bg 'bg-orange', schedule [{ day 2, start '1030', end '1330', room 'A-419' }, { day 4, start '1030', end '1230', room 'A-403' }] },
+        { code 'ME 426', section 'ME42S2', title 'Industrial Plant Engineering', c 'c-red', bg 'bg-red', schedule [{ day 2, start '1830', end '2130', room 'A-403' }, { day 4, start '1830', end '2130', room 'A-419' }] },
+        { code 'ME 427', section 'ME42S2', title 'ME Project Study 2', c 'c-teal', bg 'bg-teal', schedule [{ day 6, start '0730', end '1030', room 'A-202' }] },
+        { code 'ME 428', section 'ME42S1', title 'ME Design Project 2', c 'c-indigo', bg 'bg-indigo', schedule [{ day 1, start '1330', end '1430', room 'A-403' }, { day 2, start '1330', end '1630', room 'A-403' }, { day 4, start '1330', end '1630', room 'A-403' }] },
+        { code 'ME 429', section 'ME42S1', title 'Integration Course in Power Plant', c 'c-yellow', bg 'bg-yellow', schedule [{ day 2, start '1630', end '1830', room 'A-403' }] },
+        { code 'ME 453', section 'ME42S2', title 'Manufacturing and Industrial Processes', c 'c-pink', bg 'bg-pink', schedule [{ day 1, start '1630', end '1730', room 'A-401' }, { day 5, start '1630', end '1930', room 'A-401' }] },
+        { code 'MEE 102A', section 'ME42S2', title 'Design of Building Piping System', c 'c-gray', bg 'bg-gray', schedule [{ day 3, start '1930', end '2130', room 'A-401' }] }
+    ];
+
+    var customEvents = [];
+    try {
+        var stored = localStorage.getItem('my_schedule_tasks');
+        if(stored) customEvents = JSON.parse(stored);
+    } catch(e) {}
+
+    var eventsCache = [];
+    var days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    var currentDay = new Date().getDay();
+    var selectedDate = new Date();
+    var currentEventData = null; 
+    var currentModalId = null;
+    
+     Bounds for 11 days
+    var minDateBound = new Date(); 
+    var maxDateBound = new Date();
+    minDateBound.setDate(minDateBound.getDate() - 3);
+    maxDateBound.setDate(maxDateBound.getDate() + 7);
+
+     --- SWIPE VARS ---
+    var xDown = null;
+    var yDown = null;
+
+     --- UTILS ---
+    function tToMin(t) { var p=t.split(''); return parseInt(p[0])60 + parseInt(p[1]); }
+    function minToT(m) {
+        var h = Math.floor(m60); var mn = m%60;
+        var ap = h=12'PM''AM';
+        var h12 = h%12; if(h12===0) h12=12;
+        return h12 + '' + (mn10'0''')+mn + ' ' + ap;
+    }
+    function fmtDate(d) {
+        return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+    }
+    function isWithinBounds(d) {
+        var comp = new Date(d.toDateString());
+        var min = new Date(minDateBound.toDateString());
+        var max = new Date(maxDateBound.toDateString());
+        return comp = min && comp = max;
+    }
+
+    function initCache() {
+        eventsCache = [];
+        for(var i=0; icoursesRaw.length; i++) {
+            var c = coursesRaw[i];
+            for(var j=0; jc.schedule.length; j++) {
+                var s = c.schedule[j];
+                eventsCache.push({
+                    type 'class', idx eventsCache.length,
+                    code c.code, title c.title, section c.section,
+                    c c.c, bg c.bg,
+                    day s.day, start s.start, end s.end, room s.room,
+                    sMin tToMin(s.start), eMin tToMin(s.end)
+                });
+            }
+        }
+        for(var k=0; kcustomEvents.length; k++) {
+            var ce = customEvents[k];
+            var cd = new Date(ce.date);
+            eventsCache.push({
+                type 'event', id ce.id, idx eventsCache.length,
+                code 'TASK', title ce.title, section 'Task',
+                c 'c-red', bg 'bg-red',
+                exactDate ce.date, day cd.getDay(),
+                start ce.time, end ce.time, room 'Custom',
+                sMin tToMin(ce.time), eMin tToMin(ce.time) + 60
+            });
+        }
+    }
+
+     --- SWIPE HANDLERS ---
+    function handleTouchStart(evt) {
+        xDown = evt.touches[0].clientX;
+        yDown = evt.touches[0].clientY;
+    }
+
+    function handleTouchMove(evt) {
+        if (!xDown  !yDown) return;
+        var xUp = evt.touches[0].clientX;
+        var yUp = evt.touches[0].clientY;
+        var xDiff = xDown - xUp;
+        var yDiff = yDown - yUp;
+
+        if (Math.abs(xDiff)  Math.abs(yDiff) && Math.abs(xDiff)  60) {
+             var nextDate = new Date(selectedDate);
+             if (xDiff  0) {
+                 nextDate.setDate(nextDate.getDate() + 1);
+                 if (isWithinBounds(nextDate)) changeDay(1);
+             } else {
+                 nextDate.setDate(nextDate.getDate() - 1);
+                 if (isWithinBounds(nextDate)) changeDay(-1);
+             }
+             xDown = null; yDown = null;
+        }
+    }
+
+    function changeDay(offset) {
+        selectedDate.setDate(selectedDate.getDate() + offset);
+        renderNav(); 
+    }
+
+     --- RENDER DAY ---
+    function renderNav() {
+        var nav = document.getElementById('date-nav');
+        nav.innerHTML = '';
+        var centerBtn = null;
+        
+        var loopD = new Date(minDateBound);
+        
+        while(loopD = maxDateBound) {
+            var dStr = fmtDate(loopD);
+            var dIdx = loopD.getDay();
+            var dateNum = loopD.getDate();
+            
+            var btn = document.createElement('div');
+            btn.className = 'date-btn';
+            
+            if(dStr === fmtDate(selectedDate)) { 
+                btn.className += ' sel'; 
+                centerBtn = btn;
+                renderDayList(loopD, dIdx); 
+            }
+            
+            btn.innerHTML = 'span class=d-day' + days[dIdx] + 'spanspan class=d-num' + dateNum + 'span';
+            
+            (function(dateObj, idx, el) {
+                el.onclick = function() {
+                    selectedDate = new Date(dateObj);
+                    renderNav();
+                };
+            })(new Date(loopD), dIdx, btn);
+            nav.appendChild(btn);
+            
+            loopD.setDate(loopD.getDate() + 1);
+        }
+        
+        if(centerBtn) {
+            setTimeout(function(){ 
+                try { 
+                    var navW = nav.clientWidth;
+                    var btnW = centerBtn.offsetWidth;
+                    var offset = centerBtn.offsetLeft - (navW2) + (btnW2);
+                    nav.scrollLeft = offset; 
+                } catch(e){} 
+            }, 10);
+        }
+    }
+
+    function renderDayList(dateObj, dayIdx) {
+        var list = document.getElementById('day-list');
+        list.style.opacity = '0';
+        list.style.transform = 'translateY(5px)';
+        
+        setTimeout(function(){
+            list.innerHTML = '';
+            var dateStr = fmtDate(dateObj);
+            var evs = [];
+            
+            for(var i=0; ieventsCache.length; i++) {
+                var e = eventsCache[i];
+                if(e.type === 'class') {
+                    if(e.day === dayIdx) evs.push(e);
+                } else {
+                    if(e.exactDate === dateStr) evs.push(e);
+                }
+            }
+            evs.sort(function(a,b){ return a.sMin - b.sMin; });
+
+            if(evs.length === 0) {
+                list.innerHTML = 'div style=text-aligncenter; padding50px; color#cbd5e1; font-weightbold;NO EVENTSdiv';
+            } else {
+                for(var i=0; ievs.length; i++) {
+                    var e = evs[i];
+                    var card = document.createElement('div');
+                    
+                    card.className = 'card ' + e.c + (e.type === 'event'  ' is-event'  '');
+                    card.style.animationDelay = (i  0.05) + 's';
+                    
+                    var badge = e.type === 'event'  'span class=event-badgeTASKspan '  '';
+                    
+                    card.innerHTML = 
+                        'div class=c-codespan' + badge + e.code + 'spandiv' +
+                        'div class=c-title' + e.title + 'div' +
+                        'div class=c-meta' +
+                            'div class=tagspan⏰span ' + minToT(e.sMin) + (e.type==='class'  ' - '+minToT(e.eMin)  '') + 'div' +
+                            'div class=tagspan📍span ' + e.room + 'div' +
+                            'div class=tagspan👥span ' + e.section + 'div' +
+                        'div';
+                    
+                    (function(idx){
+                        card.onclick = function() { openModal(idx, 'day'); };
+                    })(e.idx);
+                    
+                    list.appendChild(card);
+                }
+            }
+            list.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+            list.style.opacity = '1';
+            list.style.transform = 'translateY(0)';
+        }, 150);
+    }
+
+     --- RENDER WEEK ---
+    function renderWeek() {
+        var grid = document.getElementById('week-target');
+        var html = 'div class=week-table' + 
+                   'div class=w-row style=positionsticky; top0; z-index30; background#fff;' +
+                   'div class=w-cornerdiv';
+        
+        for(var i=1; i=6; i++) html += 'div class=w-head' + days[i] + 'div';
+        html += 'div';
+
+        for(var h=7; h22; h++) {
+            var tm = (h12  (h-12)+' PM'  (h===12'12 PM'h+' AM'));
+            html += 'div class=w-row' +
+                    'div class=w-time' + tm + 'div';
+            
+            for(var d=1; d=6; d++) {
+                html += 'div class=w-cell';
+                var cellStart = h60;
+                var cellEnd = (h+1)60;
+                
+                for(var k=0; keventsCache.length; k++) {
+                    var e = eventsCache[k];
+                    if(e.type === 'class' && e.day === d) {
+                        if(e.sMin = cellStart && e.sMin  cellEnd) {
+                            var top = ((e.sMin - cellStart)60)54;
+                            var height = ((e.eMin - e.sMin)60)54;
+                            
+                            html += 'div class=evt '+e.bg+' '+e.c+' style=top'+top+'px; height'+height+'px; onclick=window.app.openModal('+e.idx+', 'week')' + 
+                                e.code + 'br' + e.room + 'div';
+                        }
+                    }
+                }
+                html += 'div';
+            }
+            html += 'div';
+        }
+        grid.innerHTML = html;
+    }
+
+     --- MODAL ---
+    function openModal(idx, source) {
+        var e = eventsCache[idx];
+        if(!e) return;
+        currentEventData = e;
+        currentModalId = e.type === 'event'  e.id  null;
+        
+        document.getElementById('m-code').innerText = e.code;
+        document.getElementById('m-code').style.backgroundColor = (e.type === 'event')  '#ef4444'  '#1e293b';
+        document.getElementById('m-title').innerText = e.title;
+        document.getElementById('m-time').innerText = minToT(e.sMin) + (e.type==='class'  ' - '+minToT(e.eMin)  '');
+        document.getElementById('m-room').innerText = e.room;
+        document.getElementById('m-sec').innerText = e.section;
+        
+        var btnAlarm = document.getElementById('btn-alarm');
+        var btnDel = document.getElementById('btn-delete');
+        
+         Allow alarm setting on week view now too
+        btnAlarm.style.display = 'block';
+        btnAlarm.onclick = function() { openAlarmForm(); };
+
+        if(e.type === 'event') {
+            btnDel.style.display = 'block';
+        } else {
+            btnDel.style.display = 'none';
+        }
+        
+        document.getElementById('modal').className = 'open';
+    }
+
+    function closeModal() { document.getElementById('modal').className = ''; }
+
+     --- ALARM LOGIC (NATIVE) ---
+    function openAlarmForm() {
+        if (!currentEventData) return;
+        
+        var e = currentEventData;
+        var fixedDate = ;
+        
+        if (e.type === 'event') {
+            fixedDate = e.exactDate;
+        } else {
+            var targetDate = new Date(selectedDate);
+            if(targetDate.getDay() !== e.day) {
+                var distance = (e.day + 7 - targetDate.getDay()) % 7;
+                targetDate.setDate(targetDate.getDate() + distance);
+            }
+            fixedDate = fmtDate(targetDate);
+        }
+
+        document.getElementById('alarm-title').value = e.title;
+        document.getElementById('alarm-date').value = fixedDate;
+        document.getElementById('alarm-time').value = e.start; 
+        
+        document.getElementById('alarm-modal').style.display = 'flex';
+    }
+
+    function closeAlarmForm() {
+        document.getElementById('alarm-modal').style.display = 'none';
+    }
+
+     === NEW SAVE ALARM (HYBRID SUPPORT) ===
+    function saveAlarm() {
+        var title = document.getElementById('alarm-title').value;
+        var dateStr = document.getElementById('alarm-date').value;
+        var timeStr = document.getElementById('alarm-time').value;
+
+         Create Date Object
+        var dParts = dateStr.split('-');
+        var tParts = timeStr.split('');
+        var alarmDate = new Date(dParts[0], dParts[1]-1, dParts[2], tParts[0], tParts[1]);
+
+        if (window.cordova && cordova.plugins.notification.local) {
+             NATIVE APP LOGIC
+            cordova.plugins.notification.local.schedule({
+                title 'Schedule Alert',
+                text title,
+                trigger { at alarmDate },
+                foreground true
+            });
+            alert(Alarm set successfully!);
+        } else {
+             BROWSER FALLBACK (ICS)
+            alert(App Mode not detected. Downloading ICS file instead.);
+            var icsData = BEGINVCALENDARnVERSION2.0nBEGINVEVENTn +
+                          SUMMARY + title + n +
+                          DTSTART + dateStr.replace(-g,'') + T + timeStr.replace('','') + 00n +
+                          DESCRIPTIONReminder set via Schedule Appn +
+                          ENDVEVENTnENDVCALENDAR;
+            window.open(datatextcalendar;charset=utf8, + escape(icsData));
+        }
+        closeAlarmForm();
+    }
+
+     --- ADD  DELETE ---
+    function openAddForm() {
+        document.getElementById('inp-date').value = fmtDate(selectedDate);
+        document.getElementById('add-modal').style.display = 'flex';
+    }
+    function closeAdd() { document.getElementById('add-modal').style.display = 'none'; }
+    function saveEvent() {
+        var title = document.getElementById('inp-title').value;
+        var date = document.getElementById('inp-date').value;
+        var time = document.getElementById('inp-time').value;
+        if(!title  !date  !time) return;
+        
+        customEvents.push({ id Date.now(), title title, date date, time time });
+        localStorage.setItem('my_schedule_tasks', JSON.stringify(customEvents));
+        closeAdd();
+        document.getElementById('inp-title').value = '';
+        initCache();
+        renderNav();
+        renderWeek();
+    }
+    function deleteEvent() {
+        if(!currentModalId) return;
+        customEvents = customEvents.filter(function(e){ return e.id !== currentModalId; });
+        localStorage.setItem('my_schedule_tasks', JSON.stringify(customEvents));
+        closeModal();
+        refreshData();
+        renderNav();
+        renderWeek();
+    }
+    
+    function refreshData() { initCache(); }
+
+    function setTab(t) {
+        document.getElementById('btn-day').className = 'toggle-btn ' + (t==='day''active''');
+        document.getElementById('btn-week').className = 'toggle-btn ' + (t==='week''active''');
+        document.getElementById('view-day').className = 'view ' + (t==='day''active''');
+        document.getElementById('view-week').className = 'view ' + (t==='week''active''');
+    }
+
+     ==========================================
+     === NOTIFICATION BAR REAL-TIME LOGIC ===
+     ==========================================
+    
+    function updateStickyNotification() {
+         Only run if plugin exists
+        if (!window.cordova  !cordova.plugins.notification.local) return;
+
+        var now = new Date();
+        var day = now.getDay();
+        var currentMins = now.getHours()  60 + now.getMinutes();
+
+        var activeClass = null;
+
+         Check if class is happening NOW
+        for(var i=0; ieventsCache.length; i++) {
+            var e = eventsCache[i];
+             Only checking courses, not tasks, for the sticky bar
+            if(e.type === 'class' && e.day === day) {
+                if (currentMins = e.sMin && currentMins  e.eMin) {
+                    activeClass = e;
+                    break;
+                }
+            }
+        }
+
+        if (activeClass) {
+            cordova.plugins.notification.local.update({
+                id 999,  Reserved ID for sticky bar
+                title 'Current Class ' + activeClass.code,
+                text activeClass.title + ' (' + activeClass.room + ')',
+                sticky true,
+                lockscreen true,
+                priority 1,
+                ongoing true,  Cannot be swiped away easily
+                foreground true
+            });
+        } else {
+             If no class, you can either clear it or show Free Time
+            cordova.plugins.notification.local.cancel(999);
+        }
+    }
+
+     INITIALIZATION for APP
+    document.addEventListener('deviceready', function () {
+         Request Permission
+        if (cordova.plugins.notification.local) {
+            cordova.plugins.notification.local.requestPermission(function (granted) {
+                console.log('Permission granted ' + granted);
+            });
+            
+             Start the loop for the Realtime Bar
+             Updates every 1 minute
+            updateStickyNotification();
+            setInterval(updateStickyNotification, 60000);
+        }
+    }, false);
+
+
+    initCache();
+    selectedDate = new Date();
+    renderNav();
+    renderWeek();
+    
+    var listEl = document.getElementById('day-list');
+    listEl.addEventListener('touchstart', handleTouchStart, false);
+    listEl.addEventListener('touchmove', handleTouchMove, false);
+
+    return {
+        setTab setTab,
+        closeModal closeModal,
+        openModal openModal,
+        openAddForm openAddForm,
+        closeAdd closeAdd,
+        saveEvent saveEvent,
+        deleteEvent deleteEvent,
+        openAlarmForm openAlarmForm,
+        closeAlarmForm closeAlarmForm,
+        saveAlarm saveAlarm
+    };
+
+})();
+script
+body
+html
