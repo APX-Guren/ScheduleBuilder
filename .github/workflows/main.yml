@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -32,12 +32,12 @@ jobs:
       - name: Add Android Platform
         run: cordova platform add android
 
-      # --- FORCE FIX: DOWNGRADE GRADLE TO 8.7 ---
+      # --- FORCE GRADLE 8.7 (This fixes the XmlParser crash) ---
       - name: Fix Gradle Version
         run: |
           cd platforms/android/gradle/wrapper
           sed -i 's/distributionUrl=.*$/distributionUrl=https\:\/\/services.gradle.org\/distributions\/gradle-8.7-all.zip/' gradle-wrapper.properties
-      # ------------------------------------------
+      # ---------------------------------------------------------
 
       - name: Build APK
         run: cordova build android --debug
